@@ -85,8 +85,8 @@ def toggle_other_rectangles():
         other_rectangle_ids.clear()
         canvas.unbind("<Configure>")  # 크기 조정 이벤트 바인딩 해제
 
-# 체크박스를 담을 LabelFrame 생성
-checkbox_frame = tk.LabelFrame(window, text="Options", padx=10, pady=10)
+# 체크박스와 라디오 버튼을 담을 LabelFrame 생성
+checkbox_frame = tk.LabelFrame(window, text="메뉴", padx=10, pady=10)
 
 # 라디오 버튼 상태를 저장할 변수 생성 (인버터 전압, 전류, 주파수 선택용)
 radio_var = tk.IntVar()
@@ -203,14 +203,17 @@ toggle_button = tk.Button(window, text="메뉴 숨기기", command=toggle_menu)
 toggle_button.place(x=10, y=10)
 
 # 체크박스 프레임 배치
-checkbox_frame.place(x=10, y=50)
+checkbox_frame.place(x=10, y=70)
 
 # 날짜 버튼 생성
 date_button = ttk.Button(window, text="날짜")  
 date_button.place(x=450,y=0, anchor="n")
 
-notebook = ttk.Notebook(window)
-notebook.pack()  # 창 크기에 맞게 확장
+s = ttk.Style()
+s.configure('TNotebook', tabposition='ne')
+
+notebook = ttk.Notebook(window, width=1280, height=900)
+notebook.place(x=0, y=30)
 
 # 각 프레임 생성
 frame1 = tk.Frame(notebook)
@@ -225,10 +228,12 @@ notebook.add(frame4, text="정보")  # '진단' 프레임 앞에 '정보' 프레
 notebook.add(frame3, text="진단")
 
 # 각 프레임에 내용 추가 (예시)
-tk.Label(frame1, text="현황 화면", font=("Arial", 40)).pack(pady=100)
-tk.Label(frame2, text="발전 화면", font=("Arial", 40)).pack(pady=100)
-tk.Label(frame4, text="정보 화면", font=("Arial", 40)).pack(pady=100)
-tk.Label(frame3, text="진단 화면", font=("Arial", 40)).pack(pady=100)
+tk.Label(frame1, text="현황 화면", font=("Arial", 40)).pack(pady=100, anchor='s')  # 하단 정렬
+tk.Label(frame2, text="발전 화면", font=("Arial", 40)).pack(pady=100, anchor='s')  # 하단 정렬
+tk.Label(frame4, text="정보 화면", font=("Arial", 40)).pack(pady=100, anchor='s')  # 하단 정렬
+tk.Label(frame3, text="진단 화면", font=("Arial", 40)).pack(pady=100, anchor='s')  # 하단 정렬
+
+
 
 # 메인 루프 실행
 window.mainloop()
