@@ -1,6 +1,7 @@
 import tkinter as tk  # tkinter 모듈을 tk라는 별칭으로 임포트
 from tkinter import ttk  # ttk 모듈에서 Combobox를 사용하기 위해 임포트
 from tkcalendar import Calendar
+import tkinter.font
 
 # 메인 윈도우 생성
 window = tk.Tk()
@@ -15,16 +16,17 @@ window.geometry(f"{screen_width}x{screen_height}")
 
 window.resizable(1, 1)
 
+font=tkinter.font.Font(family="맑은 고딕", size=18, slant="italic")
+
 # 콤보박스에 들어갈 옵션 목록
 options = ["정선한교", "함백태양광발전소", "판교가압장 태양광발전소", "서천태양광발전소"]
 
-style = ttk.Style()
-style.configure("TCombobox", padding=(0, 0, 0, 20), font=('장소', 20) )
 # 콤보박스 생성
-combo = ttk.Combobox(window, values=options)
-combo = ttk.Combobox(window, values=options, width=20, style="TCombobox")  # width를 사용해 텍스트 영역 크기 설정
+combo = ttk.Combobox(window, values=options, font= font)
+combo = ttk.Combobox(window, values=options, width=20, style="TCombobox", font= font)  # width를 사용해 텍스트 영역 크기 설정
 combo.set("장소")
 combo.place(x=600, y=0, anchor="n")
+
 
 # 콤보박스에서 선택된 값을 출력하는 함수 정의
 def on_select(event):
