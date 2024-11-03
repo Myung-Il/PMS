@@ -1,5 +1,6 @@
 import tkinter as tk  # tkinter 모듈을 tk라는 별칭으로 임포트
 from tkinter import ttk  # ttk 모듈에서 Combobox를 사용하기 위해 임포트
+from tkcalendar import Calendar
 
 # 메인 윈도우 생성
 window = tk.Tk()
@@ -238,11 +239,6 @@ checkbox_frame = tk.LabelFrame(frame1, text="메뉴", padx=10, pady=10)
 # 체크박스 프레임 배치
 checkbox_frame.place(x=10, y=70)
 
-# 날짜 버튼 생성
-date_button = ttk.Button(window, text="날짜")  
-date_button.place(x=800,y=0, anchor="n")
-
-
 # 인버터 전압, 인버터 전류, 인버터 주파수를 위한 라디오 버튼 생성
 radiobutton1 = tk.Radiobutton(checkbox_frame, text="인버터 전압", variable=radio_var, value=1, pady=10, command=lambda: [toggle_rectangle1()])
 radiobutton2 = tk.Radiobutton(checkbox_frame, text="인버터 전류", variable=radio_var, value=2, pady=10, command=lambda: [toggle_rectangle2()])
@@ -267,6 +263,35 @@ notebook.add(frame2, text="발전")
 notebook.add(frame4, text="정보")  # '진단' 프레임 앞에 '정보' 프레임 삽입
 notebook.add(frame3, text="진단")
 
+# 달력이 보이는지 여부를 추적할 변수
+calendar_visible = False
+
+# 날짜가 선택되었을 때 호출될 함수
+def get_date():
+    selected_date = cal.get_date()  # 달력에서 선택된 날짜 (YYYY-MM-DD 형식)
+    date_button.config(text=f"{selected_date}")  # "날짜" 버튼 텍스트를 선택된 날짜로 변경
+    toggle_calendar()  # 날짜 선택 후 달력 숨기기
+
+# "날짜" 버튼을 누르면 달력을 나타내거나 숨기는 함수
+def toggle_calendar():
+    global calendar_visible
+    if calendar_visible:
+        cal.place_forget()  # 달력을 숨김
+        calendar_visible = False
+    else:
+        cal.place(x=770, y=30)  # 달력을 (100, 100) 위치에 나타냄
+        calendar_visible = True
+
+# 달력 위젯 생성 (처음에는 숨겨져 있음)
+cal = Calendar(window, selectmode="day", year=2023, month=9, day=23)
+
+# 날짜 버튼 생성
+date_button = ttk.Button(window, text="날짜", command=toggle_calendar)  
+date_button.place(x=800,y=0, anchor="n")
+
+# 날짜 선택 후 확인 버튼
+select_button = ttk.Button(window, text="확인", command=get_date)
+select_button.place(x=850)
 
 # 메인 루프 실행
 window.mainloop()
