@@ -25,7 +25,7 @@ options = ["정선한교", "함백태양광발전소", "판교가압장 태양�
 combo = ttk.Combobox(window, values=options, font= font)
 combo = ttk.Combobox(window, values=options, width=20, style="TCombobox", font= font)  # width를 사용해 텍스트 영역 크기 설정
 combo.set("장소")
-combo.place(x=600, y=0, anchor="n")
+combo.place(x=150, y=0, anchor="n")
 
 
 # 콤보박스에서 선택된 값을 출력하는 함수 정의
@@ -227,6 +227,7 @@ frame1 = tk.Frame(notebook)
 frame2 = tk.Frame(notebook)
 frame3 = tk.Frame(notebook)
 frame4 = tk.Frame(notebook)
+frame5 = tk.Frame(notebook)
 
 # 캔버스 생성
 canvas = tk.Canvas(frame1, bg="white")
@@ -259,11 +260,41 @@ radiobutton_gen1 = tk.Radiobutton(checkbox_frame_generation, text="인버터 전
 radiobutton_gen2 = tk.Radiobutton(checkbox_frame_generation, text="인버팅후 누적발전량", variable=radio_gen_var, value=2)
 radiobutton_gen3 = tk.Radiobutton(checkbox_frame_generation, text="인버팅후 금일발전량", variable=radio_gen_var, value=3)
 
+# 발전(2) 탭에 사사분면 형태로 사각형을 그리는 함수 정의
+def draw_quadrant_rectangles():
+    canvas_width = canvas_generation.winfo_width()
+    canvas_height = canvas_generation.winfo_height()
+    rect_width = canvas_width / 2  # 사각형 너비는 캔버스 너비의 1/2
+    rect_height = canvas_height / 2  # 사각형 높이는 캔버스 높이의 1/2
+
+    # 기존 사각형 제거 후 다시 그리기
+    canvas_generation.delete("all")
+
+    # 1사분면 (왼쪽 위)
+    canvas_generation.create_rectangle(0, 0, rect_width, rect_height, fill="lightblue")
+
+    # 2사분면 (오른쪽 위)
+    canvas_generation.create_rectangle(rect_width, 0, canvas_width, rect_height, fill="lightgreen")
+
+    # 3사분면 (왼쪽 아래)
+    canvas_generation.create_rectangle(0, rect_height, rect_width, canvas_height, fill="lightcoral")
+
+    # 4사분면 (오른쪽 아래)
+    canvas_generation.create_rectangle(rect_width, rect_height, canvas_width, canvas_height, fill="lightyellow")
+
+# 발전(2) 프레임에 캔버스 생성
+canvas_generation = tk.Canvas(frame3, bg="white")
+canvas_generation.pack(expand=True, fill="both")
+
+# 창 크기 조정에 따라 사각형 크기도 조정
+canvas_generation.bind("<Configure>", lambda event: draw_quadrant_rectangles())
+
 # Notebook에 각 프레임 추가
 notebook.add(frame1, text="현황")
-notebook.add(frame2, text="발전")
+notebook.add(frame2, text="발전(1)")
+notebook.add(frame3, text="발전(2)")
 notebook.add(frame4, text="정보")  # '진단' 프레임 앞에 '정보' 프레임 삽입
-notebook.add(frame3, text="진단")
+notebook.add(frame5, text="진단")
 
 # 달력이 보이는지 여부를 추적할 변수
 calendar_visible = False
