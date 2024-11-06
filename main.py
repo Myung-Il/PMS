@@ -48,36 +48,36 @@ options = {"정선한교(1)":1,
 options_name = list(options.keys())
 
 #달력
-cal = Calendar(canvas_dict["정보"], selectmode="day", year=2023, month=month, day=day)
+cal = Calendar(canvas_dict["정보"], selectmode="day", year=2021, month=month, day=day)
 
 
 
 # [ 함수 ]
 # 화면 구성
 # 발전 탭의 메뉴 숨기기/나타내기 버튼 생성
-def toggle_menu_generation(toggle, check, List, lenght):
+def toggle_menu_generation(toggle, box, List, lenght):
     global menu_visible
 
     if menu_visible and toggle['text']=="메뉴 나타내기":
-        check.place(x=10, y=50)  # 체크박스를 나타냄
+        box.place(x=10, y=50)  # 체크박스를 나타냄
         toggle.config(text="메뉴 숨기기")
-        check.tkraise()
+        box.tkraise()
         # 체크박스 및 라디오 버튼 배치
         for idx in range(lenght):List[idx].pack(anchor="w")
 
     elif not menu_visible and toggle['text']=="메뉴 숨기기":
-        check.place_forget()  # 체크박스를 숨김
+        box.place_forget()  # 체크박스를 숨김
         toggle.config(text="메뉴 나타내기")
 
     elif not menu_visible:
-        check.place(x=10, y=50)  # 체크박스를 나타냄
+        box.place(x=10, y=50)  # 체크박스를 나타냄
         toggle.config(text="메뉴 숨기기")
-        check.tkraise()
+        box.tkraise()
         # 체크박스 및 라디오 버튼 배치
         for idx in range(lenght):List[idx].pack(anchor="w")
 
     elif menu_visible:
-        check.place_forget()  # 체크박스를 숨김
+        box.place_forget()  # 체크박스를 숨김
         toggle.config(text="메뉴 나타내기")
         
     menu_visible = not menu_visible
@@ -183,21 +183,21 @@ def inverter_graph(inverter_id,radio_btn_num):
 
     # 화면에 어떻게 띄울건지 설정(전류, 전압, 주파수 순서)
     if radio_btn_num == 1:
-        data.plot.line(x='측정일시',y=['인버터전압(R상)','인버터전압(S상)','인버터전압(T상)'],title='인버터전압')
+        data.plot.line(x='측정일시',y=['인버터전압(R상)','인버터전압(S상)','인버터전압(T상)'],title='인버터전압 (V)')
         # 화면에 나올 y축을 정리할 때 사용할 변수 설정
         maximum = max(data['인버터전압(R상)'].max(),data['인버터전압(S상)'].max(),data['인버터전압(T상)'].max())
         maximum = maximum if maximum>10 else 10
         ck = maximum//5
         plt.yticks(np.arange(ck,maximum+2,ck))
     elif radio_btn_num == 2:
-        data.plot.line(x='측정일시',y=['인버터전류(R상)','인버터전류(S상)','인버터전류(T상)'],title='인버터전류')
+        data.plot.line(x='측정일시',y=['인버터전류(R상)','인버터전류(S상)','인버터전류(T상)'],title='인버터전류 (A)')
         maximum = max(data['인버터전류(R상)'].max(),data['인버터전류(S상)'].max(),data['인버터전류(T상)'].max())
         maximum = maximum if maximum>10 else 10
         ck = maximum//5
         plt.yticks(np.arange(ck,maximum+2,ck))
     elif radio_btn_num == 3:
         print(data.loc[data["측정일시"]==time]['인버터주파수'])
-        data.plot.line(x='측정일시',y='인버터주파수',title='인버터주파수')
+        data.plot.line(x='측정일시',y='인버터주파수',title='인버터주파수 (Hz)')
         plt.yticks(np.arange(0,102,20))
     else:
         plt.text("인버터 그래프 오류 발생")
@@ -299,15 +299,23 @@ def time_control():
     img_create(notebook.tab(notebook.select(), "text"))
     window.update()
 
-    lbl.config(text=f"2023년{month:>3d}월{day:>3d}일 {hour:0>2d}:{minute:0>2d}")
+    lbl.config(text=f"2021년{month:>3d}월{day:>3d}일 {hour:0>2d}:{minute:0>2d}")
     window.after(1000, time_control)
 
 def calendar_control():
+    print(cal.get_date())
     cal.place(x=0, y=82)
+    load_csv(options[combo.get()], canvas_dict["정보"])
+    
 
 def load_csv(inverter_id, canvas):
-    file_path = f"info{inverter_id}"
-
+    df = pd.read_csv(f'./info{inverter_id}.csv',encoding='cp949')
+    df['측정일시'] = pd.to_datetime(df['측정일시'])
+    end_time = pd.to_datetime(f"2021-{month}-{day}  {hour}:{minute}:00")
+    start_time = pd.to_datetime(f"2021-{month}-{day}  23:59:00")-pd.Timedelta(days=1)
+    data = df.loc[(df['측정일시']>start_time) & (df['측정일시']<=end_time)]
+    data['측정일시'] = data['측정일시'].dt.strftime("%Y-%m-%d %H:%M")
+    print(data)
 
 
 # [ 진단 ]
@@ -337,25 +345,25 @@ if __name__=="__main__":
     toggle_btn_inverter = tk.Button(frame_dict["인버터 관리"], text="메뉴 나타내기")
     toggle_btn_inverter.place(x=10, y=10)
 
-    checkbox_frame_inverter = tk.LabelFrame(frame_dict["인버터 관리"], text="발전 메뉴", padx=10, pady=10)
-    checkbox_frame_inverter.place(x=10, y=70)
+    box_frame_inverter = tk.LabelFrame(frame_dict["인버터 관리"], text="발전 메뉴", padx=10, pady=10)
+    box_frame_inverter.place(x=10, y=70)
 
-    radio_btn_inverter_list = [tk.Radiobutton(checkbox_frame_inverter, text=elm, variable=radio_gen_var1, value=idx,
+    radio_btn_inverter_list = [tk.Radiobutton(box_frame_inverter, text=elm, variable=radio_gen_var1, value=idx,
                                               command=lambda:img_create("인버터 관리"))
                                for elm, idx in [["전압", 1], ["전류", 2], ["주파수", 3]]]
-    toggle_btn_inverter.config(command=lambda:toggle_menu_generation(toggle_btn_inverter, checkbox_frame_inverter, radio_btn_inverter_list, 3))
+    toggle_btn_inverter.config(command=lambda:toggle_menu_generation(toggle_btn_inverter, box_frame_inverter, radio_btn_inverter_list, 3))
 
     # 발전
     # 메뉴 숨기기/나타내기 버튼 및 체크박스 프레임 생성
     toggle_btn_develop = tk.Button(frame_dict["발전"], text="메뉴 나타내기")
     toggle_btn_develop.place(x=10, y=10)
-    checkbox_frame_develop = tk.LabelFrame(frame_dict["발전"], text="발전 메뉴", padx=10, pady=10)
-    checkbox_frame_develop.place(x=10, y=70)
+    box_frame_develop = tk.LabelFrame(frame_dict["발전"], text="발전 메뉴", padx=10, pady=10)
+    box_frame_develop.place(x=10, y=70)
 
-    radio_btn_develop_list = [tk.Radiobutton(checkbox_frame_develop, text=elm, variable=radio_gen_var2, value=idx,
+    radio_btn_develop_list = [tk.Radiobutton(box_frame_develop, text=elm, variable=radio_gen_var2, value=idx,
                                               command=lambda:img_create("발전"))
                                for elm, idx in [["종합 전력", 1], ["인버팅 전", 2]]]
-    toggle_btn_develop.config(command=lambda:toggle_menu_generation(toggle_btn_develop, checkbox_frame_develop, radio_btn_develop_list, 2))
+    toggle_btn_develop.config(command=lambda:toggle_menu_generation(toggle_btn_develop, box_frame_develop, radio_btn_develop_list, 2))
 
 
     # 기능
@@ -368,8 +376,8 @@ if __name__=="__main__":
     radio_btn_develop_list[0].select()
     canvas_dict["정보"].bind("<Configure>", lambda event:calendar_control())
 
-    lbl = tk.Label(window, text=f"2023년{month:>3d}월{day:>3d}일 {hour:0>2d}:{minute:0>2d}")
-    lbl.place(x=300, y=50)
+    lbl = tk.Label(window, font=font, text=f"2021년{month:>3d}월{day:>3d}일 {hour:0>2d}:{minute:0>2d}")
+    lbl.place(x=300, y=0)
 
     #
     window.mainloop()
