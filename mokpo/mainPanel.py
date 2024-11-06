@@ -3,6 +3,9 @@ from tkinter import ttk  # ttk 모듈에서 Combobox를 사용하기 위해 임�
 from tkcalendar import Calendar
 import tkinter.font
 
+
+
+
 # 메인 윈도우 생성
 window = tk.Tk()
 window.title("태양모니터링시스템")
@@ -19,12 +22,15 @@ window.resizable(1, 1)
 font=tkinter.font.Font(family="맑은 고딕", size=18, slant="italic")
 
 # 콤보박스에 들어갈 옵션 목록
-options = ["정선한교", "함백태양광발전소", "판교가압장 태양광발전소", "서천태양광발전소"]
+options = ["정선한교(1)", 
+           "함백태양광발전소(6)", 
+           "판교가압장 태양광발전소(33)", "판교가압장 태양광발전소(34)", 
+           "서천태양광발전소(4)", "서천태양광발전소(5)"]
 
 # 콤보박스 생성
 combo = ttk.Combobox(window, values=options, font= font)
 combo = ttk.Combobox(window, values=options, width=20, style="TCombobox", font= font)  # width를 사용해 텍스트 영역 크기 설정
-combo.set("장소")
+combo.set("정선한교(1)")
 combo.place(x=150, y=0, anchor="n")
 
 
@@ -176,22 +182,7 @@ def toggle_rectangle3():
 # 메뉴 표시 여부를 저장하는 변수
 menu_visible = False
 
-# 메뉴(콤보박스)를 숨기거나 나타내는 함수 정의
-def toggle_menu():
-    global menu_visible
-    if menu_visible:
-        checkbox_frame.place_forget()  # 체크박스를 숨김
-        toggle_button.config(text="메뉴 나타내기")
-    else:
-        checkbox_frame.place(x=10, y=50)  # 체크박스를 나타냄
-        toggle_button.config(text="메뉴 숨기기")
-        checkbox_frame.tkraise()
-        # 체크박스 및 라디오 버튼 배치
-        radiobutton1.pack(anchor="w")
-        radiobutton2.pack(anchor="w")
-        radiobutton3.pack(anchor="w")
-        checkbox7.pack(anchor="w")
-    menu_visible = not menu_visible
+
 # 발전 탭의 메뉴 숨기기/나타내기 버튼 생성
 def toggle_menu_generation():
     global menu_visible
@@ -232,22 +223,6 @@ frame5 = tk.Frame(notebook)
 # 캔버스 생성
 canvas = tk.Canvas(frame1, bg="white")
 canvas.pack(expand=True, fill='both')
-
-# 메뉴 숨기기/나타내기 버튼 생성
-toggle_button = tk.Button(frame1, text="메뉴 숨기기", command=toggle_menu)
-toggle_button.place(x=10, y=10)
-
-# 체크박스와 라디오 버튼을 담을 LabelFrame 생성
-checkbox_frame = tk.LabelFrame(frame1, text="메뉴", padx=10, pady=10)
-# 체크박스 프레임 배치
-checkbox_frame.place(x=10, y=70)
-
-# 인버터 전압, 인버터 전류, 인버터 주파수를 위한 라디오 버튼 생성
-radiobutton1 = tk.Radiobutton(checkbox_frame, text="인버터 전압", variable=radio_var, value=1, pady=10, command=lambda: [toggle_rectangle1()])
-radiobutton2 = tk.Radiobutton(checkbox_frame, text="인버터 전류", variable=radio_var, value=2, pady=10, command=lambda: [toggle_rectangle2()])
-radiobutton3 = tk.Radiobutton(checkbox_frame, text="인버터 주파수", variable=radio_var, value=3, pady=10, command=lambda: [toggle_rectangle3()])
-
-checkbox7 = tk.Checkbutton(checkbox_frame, text="기타", variable=checkbox_var7, pady=20, command=toggle_other_rectangles)
 
 # 발전 탭에 메뉴 숨기기/나타내기 버튼 및 체크박스 프레임 생성
 toggle_button_generation = tk.Button(frame2, text="메뉴 숨기기", command=toggle_menu_generation)
@@ -291,8 +266,8 @@ canvas_generation.bind("<Configure>", lambda event: draw_quadrant_rectangles())
 
 # Notebook에 각 프레임 추가
 notebook.add(frame1, text="현황")
-notebook.add(frame2, text="발전(1)")
-notebook.add(frame3, text="발전(2)")
+notebook.add(frame2, text="인버터 관리")
+notebook.add(frame3, text="발전")
 notebook.add(frame4, text="정보")  # '진단' 프레임 앞에 '정보' 프레임 삽입
 notebook.add(frame5, text="진단")
 
