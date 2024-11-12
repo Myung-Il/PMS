@@ -1,0 +1,1 @@
+for e in []:print(123)

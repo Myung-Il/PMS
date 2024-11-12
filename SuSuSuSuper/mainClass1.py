@@ -24,43 +24,62 @@ def time_control():
 
     plt.clf()
     currentSituation.draw_quadrant_rectangles()
-    create_img(notebook.tab(notebook.select(), "text"))
+    select_graph(notebook.tab(notebook.select(), "text"))
 
     lbl.config(text=f"2021년{month:>3d}월{day:>3d}일 {hour:0>2d}:{minute:0>2d}")
     window.after(1000, time_control)
 
-def create_img(now):
+def select_graph(now):
     match now:
         case "인버터 관리":inverterManagement.inverter_graph(options[combo.get()], radio_gen_var1.get())
         case "발전":development.development_graph(options[combo.get()], radio_gen_var2.get())
 
 class Menu:
-    def __init__(self, canvas, radioVar, radioList):
+    def __init__(self, canvas, var, radioList):
         self.canvas = canvas
-        self.radioVar = radioVar
+        self.var = var
         self.radioList = radioList
 
         self.toggle, self.box, self.radio = None, None, None
+        self.boxCanvas, self.line, self.check1, self.check2 = None, None, None, None
         self.menu_visible = False
     
     def createRadioBox(self, function):
         self.toggle = tk.Button(self.canvas, width=30, height=30, bitmap="info")
         self.box = tk.LabelFrame(self.canvas, text="발전 메뉴", padx=10, pady=10)
-        self.radio = [tk.Radiobutton(self.box, text=elm, variable=self.radioVar, value=idx,
-                                command=lambda:function(options[combo.get()], self.radioVar.get()))
-                                for elm, idx in self.radioList]
+        self.radio = [tk.Radiobutton(self.box, text=elm, variable=self.var, value=idx,
+                                     command=lambda:function(options[combo.get()], self.var.get()))
+                                     for elm, idx in self.radioList]
         self.toggle.place(x=10, y=10)
         self.box.place(x=10, y=70)
-        self.toggle.config(command=lambda:self.generation(len(self.radioList)))
+        self.toggle.config(command=lambda:self.generation(self.radio))
 
-    def generation(self, length):
+    def createCheckBox(self, function):
+        self.toggle = tk.Button(self.canvas, width=30, height=30, bitmap="info")
+        self.box = tk.LabelFrame(self.canvas, text="발전 메뉴", padx=10, pady=10)
+        self.boxCanvas = tk.Canvas(self.box, width=80, height=10)
+        self.check1 = [tk.Checkbutton(self.box, text=elm, variable=self.var[idx-1],
+                                     command=lambda:function())
+                                     for elm, idx in self.radioList[0]]
+        self.check2 = [tk.Checkbutton(self.box, text=elm, variable=self.var[idx+2],
+                                     command=lambda:function())
+                                     for elm, idx in self.radioList[1]]
+        self.toggle.place(x=10, y=10)
+        self.box.place(x=10, y=70)
+        self.toggle.config(command=lambda:self.generation(self.check1, self.check2, True))
+
+    def generation(self, List1, List2=[], lineEX=False):
         if self.menu_visible:
             self.box.place_forget()
         else:
             self.box.place(x=10, y=50)
             self.box.tkraise()
-            for idx in range(length):
-                self.radio[idx].pack(anchor="w")
+            self.line = None
+            for elm in List1:elm.pack(anchor="w")
+            if lineEX:
+                self.boxCanvas.pack()
+                self.line = self.boxCanvas.create_line(0, 5, 150, 5)
+            for elm in List2:elm.pack(anchor="w")
         self.menu_visible = not self.menu_visible
 
 class Frame:
@@ -70,7 +89,7 @@ class Frame:
         self.canvas = tk.Canvas(self.frame, bg="white")
         self.canvas.pack(expand=True, fill='both')
 
-    def on_img(self, img):
+    def on_graph(self, img):
         self.canvas.delete("all")
         img = Image.open(img)
         
@@ -141,7 +160,7 @@ class InverterManagement(Frame, Menu):
         Menu.__init__(self, self.canvas, radio_gen_var1, [["전압", 1], ["전류", 2], ["주파수", 3]])
         self.createRadioBox(self.inverter_graph)
 
-    def inverter_graph(self, id, radioVar):
+    def inverter_graph(self, id, var):
         global month, day, hour, minute
         
         plt.rcParams['font.family'] ='Malgun Gothic'
@@ -156,19 +175,19 @@ class InverterManagement(Frame, Menu):
                 (df['측정일시']<=time)]
         data['측정일시'] = data['측정일시'].dt.strftime("%H:%M")
 
-        if radioVar == 1:
+        if var == 1:
             data.plot.line(x='측정일시',y=['인버터전압(R상)','인버터전압(S상)','인버터전압(T상)'],title='인버터전압 (V)')
             maximum = max(data['인버터전압(R상)'].max(),data['인버터전압(S상)'].max(),data['인버터전압(T상)'].max())
             maximum = maximum if maximum>10 else 10
             ck = maximum//5
             plt.yticks(np.arange(ck,maximum+2,ck))
-        elif radioVar == 2:
+        elif var == 2:
             data.plot.line(x='측정일시',y=['인버터전류(R상)','인버터전류(S상)','인버터전류(T상)'],title='인버터전류 (A)')
             maximum = max(data['인버터전류(R상)'].max(),data['인버터전류(S상)'].max(),data['인버터전류(T상)'].max())
             maximum = maximum if maximum>10 else 10
             ck = maximum//5
             plt.yticks(np.arange(ck,maximum+2,ck))
-        elif radioVar == 3:
+        elif var == 3:
             print(data.loc[data["측정일시"]==time]['인버터주파수'])
             data.plot.line(x='측정일시',y='인버터주파수',title='인버터주파수 (Hz)')
             plt.yticks(np.arange(0,102,20))
@@ -178,15 +197,15 @@ class InverterManagement(Frame, Menu):
         plt.legend()
         
         plt.savefig("inverter_plot.png")
-        self.on_img("./inverter_plot.png")
+        self.on_graph("./inverter_plot.png")
 
 class Development(Frame, Menu):
     def __init__(self):
-        super().__init__("발전")
+        Frame.__init__(self, "발전")
         Menu.__init__(self, self.canvas, radio_gen_var2, [["종합 전력", 1], ["인버팅 전", 2]])
         self.createRadioBox(self.development_graph)
 
-    def development_graph(self, id, radioVar):
+    def development_graph(self, id, var):
         global month, day, hour, minute
 
         plt.rcParams['font.family'] ='Malgun Gothic'
@@ -203,7 +222,7 @@ class Development(Frame, Menu):
         data['측정일시'] = data['측정일시'].dt.strftime("%H:%M")
         data1['측정일시'] = data1['측정일시'].dt.strftime("%H:%M")
 
-        if radioVar == 1:
+        if var == 1:
             maximum = max(data['유효전력(종합)'].max(),data['무효전력(종합)'].max())
             maximum = maximum if maximum>10 else 10
             ck = maximum//5
@@ -220,7 +239,7 @@ class Development(Frame, Menu):
             plt.legend()
             plt.yticks(np.arange(0,102,10))
 
-        elif radioVar == 2:
+        elif var == 2:
             grid = gridspec.GridSpec(3,1,wspace=0.3,hspace=0.3)
             name_list = ["인버팅전 모듈전력(PV)","인버팅전 모듈전압(PV)","인버팅전 모듈전류(PV)"]
             maximum_list = [data[name].max() if data[name].max()>10 else 10 for name in name_list]
@@ -235,11 +254,49 @@ class Development(Frame, Menu):
         else: plt.text("발전 그래프 오류 발생")
 
         plt.savefig("develop_plot.png")
-        self.on_img("./develop_plot.png")
+        self.on_graph("./develop_plot.png")
 
-class Information(Frame):
+class Information(Frame, Menu):
     def __init__(self):
-        super().__init__("정보")
+        Frame.__init__(self, "정보")
+        Menu.__init__(self, self.canvas, check_gen_varList, [[["전압", 1], ["전류", 2], ["주파수", 3]], [["종합 전력", 1], ["인버팅 전", 2]]])
+        self.createCheckBox(None)
+
+        self.canvas.bind("<Configure>", self.update_button_positions)
+        self.yearComboBox = ttk.Combobox(self.canvas, values=[2021], width=10, font=("맑은 고딕", 16))
+        self.yearLabel = tk.Label(self.canvas, font=("맑은 고딕", 10), text="년도")
+        self.yearComboBox.set(2021)
+        
+        self.monthComboBox = ttk.Combobox(self.canvas, values=list(range(7, 11)), width=10, font=("맑은 고딕", 16))
+        self.monthLabel = tk.Label(self.canvas, font=("맑은 고딕", 10), text="월")
+        self.monthComboBox.set(7)
+        self.monthComboBox.bind("<<ComboboxSelected>>", self.update_day)
+
+        self.dayComboBox = ttk.Combobox(self.canvas, width=10, font=("맑은 고딕", 16))
+        self.dayLabel = tk.Label(self.canvas, font=("맑은 고딕", 10), text="일")
+        self.update_day()
+        self.dayComboBox.set(1)
+
+        self.searchBtn = tk.Button(self.canvas, width=10, font=("맑은 고딕", 12), text="검색")
+        self.saveBtn = tk.Button(self.canvas, width=10, font=("맑은 고딕", 12), text="저장")
+
+    def update_day(self, event=None):
+        days = list(range(1, 31 + (1 if int(self.monthComboBox.get()) != 9 else 0)))
+        self.dayComboBox['values'] = days
+
+    def update_button_positions(self, event=None):
+        width = self.canvas.winfo_width()
+        self.yearComboBox.place(x=width-690, y=10)
+        self.monthComboBox.place(x=width-535, y=10)
+        self.dayComboBox.place(x=width-380, y=10)
+
+        self.yearLabel.place(x=width-690, y=50)
+        self.monthLabel.place(x=width-535, y=50)
+        self.dayLabel.place(x=width-380, y=50)
+
+        self.searchBtn.place(x=width - 225, y=10)
+        self.saveBtn.place(x=width - 115, y=10)
+
 
 class Diagnosis(Frame):
     def __init__(self):
@@ -272,6 +329,7 @@ if '__main__' == __name__:
     font=tkinter.font.Font(family="맑은 고딕", size=18, slant="italic")
     radio_gen_var1 = tk.IntVar(value=1)
     radio_gen_var2 = tk.IntVar(value=1)
+    check_gen_varList = [tk.IntVar()for _ in range(5)]
     
     # 지역 설정
     options = {"정선한교(1)":1, 
@@ -302,6 +360,7 @@ if '__main__' == __name__:
     # [ 정보 ]
     information = Information()
     notebook.add(information.frame, text=information.name)
+    # information.canvas.bind("<Configure>", lambda event:information.setting())
 
     # [ 진단 ]
     diagnosis = Diagnosis()
