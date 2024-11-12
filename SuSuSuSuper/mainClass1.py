@@ -57,7 +57,7 @@ class Menu:
     def createCheckBox(self, function):
         self.toggle = tk.Button(self.canvas, width=30, height=30, bitmap="info")
         self.box = tk.LabelFrame(self.canvas, text="발전 메뉴", padx=10, pady=10)
-        self.boxCanvas = tk.Canvas(self.box, width=80, height=10)
+        self.boxCanvas = tk.Canvas(self.box, width=100, height=10)
         self.check1 = [tk.Checkbutton(self.box, text=elm, variable=self.var[idx-1],
                                      command=lambda:function())
                                      for elm, idx in self.radioList[0]]
@@ -78,7 +78,7 @@ class Menu:
             for elm in List1:elm.pack(anchor="w")
             if lineEX:
                 self.boxCanvas.pack()
-                self.line = self.boxCanvas.create_line(0, 5, 150, 5)
+                self.line = self.boxCanvas.create_line(0, 5, 200, 5)
             for elm in List2:elm.pack(anchor="w")
         self.menu_visible = not self.menu_visible
 
@@ -229,7 +229,6 @@ class Development(Frame, Menu):
 
             grid = gridspec.GridSpec(1,3,wspace=0.3,hspace=0.3)
             plt.subplot(grid[0,:2]).plot(data['측정일시'],data['유효전력(종합)'],label='유효전력')
-            plt.gca().set_yticklabels(['{:.0f}'.format(x) for x in plt.gca().get_yticks()])
             plt.subplot(grid[0,:2]).plot(data['측정일시'],data['무효전력(종합)'],label='무효전력')
             plt.yticks(np.arange(ck,maximum+2,ck))
             plt.xticks(np.arange(0,60,10))
@@ -259,7 +258,8 @@ class Development(Frame, Menu):
 class Information(Frame, Menu):
     def __init__(self):
         Frame.__init__(self, "정보")
-        Menu.__init__(self, self.canvas, check_gen_varList, [[["전압", 1], ["전류", 2], ["주파수", 3]], [["종합 전력", 1], ["인버팅 전", 2]]])
+        Menu.__init__(self, self.canvas, check_gen_varList, [[["전압", 1], ["전류", 2], ["주파수", 3]],
+                                                             [["유무효 전력", 1], ["인버팅 전 전력", 2], ["인버팅 전 전압", 3], ["인버팅 전 전류", 4]]])
         self.createCheckBox(None)
 
         self.canvas.bind("<Configure>", self.update_button_positions)
@@ -329,7 +329,7 @@ if '__main__' == __name__:
     font=tkinter.font.Font(family="맑은 고딕", size=18, slant="italic")
     radio_gen_var1 = tk.IntVar(value=1)
     radio_gen_var2 = tk.IntVar(value=1)
-    check_gen_varList = [tk.IntVar()for _ in range(5)]
+    check_gen_varList = [tk.IntVar()for _ in range(7)]
     
     # 지역 설정
     options = {"정선한교(1)":1, 
