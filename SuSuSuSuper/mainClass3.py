@@ -3,7 +3,6 @@ import tkinter as tk
 import tkinter.font
 import numpy as np
 import pandas as pd
-from tksheet import Sheet
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from PIL import Image, ImageTk
@@ -42,7 +41,7 @@ class Menu:
         self.radioList = radioList
 
         self.toggle, self.box, self.radio = None, None, None
-        self.check1, self.check2, self.check3 = None, None, None
+        self.boxCanvas, self.line, self.check1, self.check2 = None, None, None, None
         self.menu_visible = False
     
     def createRadioBox(self, function):
@@ -59,20 +58,17 @@ class Menu:
         self.toggle = tk.Button(self.canvas, width=30, height=30, bitmap="info")
         self.box = tk.LabelFrame(self.canvas, text="발전 메뉴", padx=10, pady=10)
         self.boxCanvas = tk.Canvas(self.box, width=100, height=10)
-        self.check1 = [tk.Checkbutton(self.box, text=elm, variable=self.var[idx],
+        self.check1 = [tk.Checkbutton(self.box, text=elm, variable=self.var[idx-1],
                                      command=lambda:function())
                                      for elm, idx in self.radioList[0]]
-        self.check2 = [tk.Checkbutton(self.box, text=elm, variable=self.var[idx],
+        self.check2 = [tk.Checkbutton(self.box, text=elm, variable=self.var[idx+2],
                                      command=lambda:function())
                                      for elm, idx in self.radioList[1]]
-        self.check3 = [tk.Checkbutton(self.box, text=elm, variable=self.var[idx],
-                                     command=lambda:function())
-                                     for elm, idx in self.radioList[2]]
         self.toggle.place(x=10, y=10)
         self.box.place(x=10, y=70)
-        self.toggle.config(command=lambda:self.generation(self.check1, self.check2, self.check3))
+        self.toggle.config(command=lambda:self.generation(self.check1, self.check2, True))
 
-    def generation(self, List1, List2=[], List3=[]):
+    def generation(self, List1, List2=[], lineEX=False):
         if self.menu_visible:
             self.box.place_forget()
         else:
@@ -80,8 +76,10 @@ class Menu:
             self.box.tkraise()
             self.line = None
             for elm in List1:elm.pack(anchor="w")
+            if lineEX:
+                self.boxCanvas.pack()
+                self.line = self.boxCanvas.create_line(0, 5, 200, 5)
             for elm in List2:elm.pack(anchor="w")
-            for elm in List3:elm.pack(anchor="w")
         self.menu_visible = not self.menu_visible
 
 class Frame:
@@ -259,16 +257,10 @@ class Development(Frame, Menu):
 
 class Information(Frame, Menu):
     def __init__(self):
-        self.info = [[["전압", 0], ["전류", 1], ["주파수", 2]],
-                     [["종합 전력", 3], ["인버팅 전 전력", 4], ["인버팅 전 전압", 5], ["인버팅 전 전류", 6]],
-                     [["인버팅 후 발전량", 7], ["온도", 8]]]
         Frame.__init__(self, "정보")
-        Menu.__init__(self, self.canvas, check_gen_varList, self.info)
-        self.getDataItems = []
-        self.c = {"전압":["인버터전압(R상)","인버터전압(S상)","인버터전압(T상)"],"전류":["인버터전류(R상)","인버터전류(S상)","인버터전류(T상)"],"주파수":["인버터주파수"],
-                    "종합 전력":["유효전력(종합)","무효전력(종합)","역률(종합)"],"인버팅 전 전력":["인버팅전 모듈전력(PV)"],"인버팅 전 전압":["인버팅전 모듈전압(PV)"],"인버팅 전 전류":["인버팅전 모듈전류(PV)"],
-                    "인버팅 후 발전량":["인버팅후 누적발전량","인버팅후 금일발전량"],"온도":["외부온도(인버터단위)","모듈온도(인버터단위)"]}
-        self.createCheckBox(self.getData)
+        Menu.__init__(self, self.canvas, check_gen_varList, [[["전압", 1], ["전류", 2], ["주파수", 3]],
+                                                             [["유무효 전력", 1], ["인버팅 전 전력", 2], ["인버팅 전 전압", 3], ["인버팅 전 전류", 4]]])
+        self.createCheckBox(None)
 
         self.canvas.bind("<Configure>", self.update_button_positions)
         self.yearComboBox = ttk.Combobox(self.canvas, values=[2021], width=10, font=("맑은 고딕", 16))
@@ -285,8 +277,8 @@ class Information(Frame, Menu):
         self.update_day()
         self.dayComboBox.set(1)
 
-        self.searchBtn = tk.Button(self.canvas, width=10, font=("맑은 고딕", 12), text="검색", command=lambda:self.search(options[combo.get()]))
-        self.saveBtn = tk.Button(self.canvas, width=10, font=("맑은 고딕", 12), text="저장",  command=lambda:self.saveCSV(options[combo.get()]))
+        self.searchBtn = tk.Button(self.canvas, width=10, font=("맑은 고딕", 12), text="검색")
+        self.saveBtn = tk.Button(self.canvas, width=10, font=("맑은 고딕", 12), text="저장")
 
     def update_day(self, event=None):
         days = list(range(1, 31 + (1 if int(self.monthComboBox.get()) != 9 else 0)))
@@ -305,66 +297,12 @@ class Information(Frame, Menu):
         self.searchBtn.place(x=width - 225, y=10)
         self.saveBtn.place(x=width - 115, y=10)
 
-    def getData(self):
-        self.getDataItems = [elm for elmList in self.info for elm, idx in elmList if check_gen_varList[idx].get()]
-
-    def search(self, id):
-        self.chart(id)
-
-    def saveCSV(self, id):
-        time = pd.to_datetime(f"{self.yearComboBox.get()}-{self.monthComboBox.get()}-{self.dayComboBox.get()} 00:00:00")
-        items = ['장소','측정일시']
-        for i in self.getDataItems:
-            items+=self.c[i]
-        save_data = self.df.loc[(self.df["측정일시"]>=time)&(self.df["측정일시"]<time+pd.Timedelta(days=1)),items]
-        save_data.to_csv(f"info_{id}_save.csv")
-
-    def chart(self, id):
-        self.df = pd.read_csv(f'./info{id}.csv',encoding='cp949')
-        self.df['측정일시'] = pd.to_datetime(self.df['측정일시'])
-        time = pd.to_datetime(f"{self.yearComboBox.get()}-{self.monthComboBox.get()}-{self.dayComboBox.get()} 00:00:00")
-        items = ['측정일시']
-        for i in self.getDataItems:
-            items+=self.c[i]
-        print_data = self.df.loc[(self.df["측정일시"]>=time)&(self.df["측정일시"]<time+pd.Timedelta(days=1)),items]
-        print_data['측정일시'] = print_data['측정일시'].dt.strftime("%H:%M")
-
-        sheet = Sheet(self.canvas, data=print_data.values.tolist())  # Convert DataFrame to list of lists for tksheet
-        sheet.headers(print_data.columns.tolist())  # Set headers to column names
-        sheet.height_and_width(height=600,width=1200)
-        sheet.place(x=160, y=70)
-
 
 class Diagnosis(Frame):
     def __init__(self):
         super().__init__("진단")
 
-    def setting(self, id):
-        global month, day, hour, minute
-        
-        plt.rcParams['font.family'] = 'Malgun Gothic'
-        plt.rcParams['axes.unicode_minus'] = False
 
-        df = pd.read_csv(f'./info{id}.csv', encoding='cp949')
-        df['측정일시'] = pd.to_datetime(df['측정일시'])
-        time = pd.to_datetime(f"2021-{month}-{day} {hour}:{minute}:00")
-        data = df[(df['인버터아이디'] == id) & (df['측정일시'] == time)]
-
-        et = tk.Label(self.canvas, font=('맑은 고딕', 20))
-        mt = tk.Label(self.canvas, font=('맑은 고딕', 20))
-        pf = tk.Label(self.canvas, font=('맑은 고딕', 20))
-        
-        print(data.loc[data['외부온도(인버터단위)']>=40].empty)
-        if data.loc[data['외부온도(인버터단위)']>=40].empty:et['text'] = '외부온도 이상무'
-        else:et['text'] = '외부 온도가 너무 높습니다. 주의해주시기 바랍니다.'
-        if data.loc[data['모듈온도(인버터단위)']>=60].empty:mt['text'] = '모듈온도 이상무'
-        else:mt['text'] = '모듈 온도가 너무 높습니다. 인버터의 쿨러를 확인하여 주시기 바랍니다.'
-        if data.loc[data['역률(종합)']<= 95].empty:pf['text'] = '역률 이상무'
-        else:pf['text'] = '역률이 너무 낮습니다. 발전기를 확인하여주시기 바랍니다.'
-
-        et.place(x=50, y=50)
-        mt.place(x=50, y=250)
-        pf.place(x=50, y=450)
 
 
 
@@ -391,7 +329,7 @@ if '__main__' == __name__:
     font=tkinter.font.Font(family="맑은 고딕", size=18, slant="italic")
     radio_gen_var1 = tk.IntVar(value=1)
     radio_gen_var2 = tk.IntVar(value=1)
-    check_gen_varList = [tk.IntVar() for _ in range(9)]
+    check_gen_varList = [tk.IntVar()for _ in range(7)]
     
     # 지역 설정
     options = {"정선한교(1)":1, 
@@ -422,11 +360,11 @@ if '__main__' == __name__:
     # [ 정보 ]
     information = Information()
     notebook.add(information.frame, text=information.name)
+    # information.canvas.bind("<Configure>", lambda event:information.setting())
 
     # [ 진단 ]
     diagnosis = Diagnosis()
     notebook.add(diagnosis.frame, text=diagnosis.name)
-    diagnosis.canvas.bind("<Configure>", lambda event:diagnosis.setting(1))
 
 
     # 기능
