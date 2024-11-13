@@ -26,6 +26,7 @@ def time_control():
     plt.clf()
     currentSituation.draw_quadrant_rectangles()
     select_graph(notebook.tab(notebook.select(), "text"))
+    diagnosis.setting(options[combo.get()])
 
     lbl.config(text=f"2021년{month:>3d}월{day:>3d}일 {hour:0>2d}:{minute:0>2d}")
     window.after(1000, time_control)
@@ -354,7 +355,6 @@ class Diagnosis(Frame):
         mt = tk.Label(self.canvas, font=('맑은 고딕', 20))
         pf = tk.Label(self.canvas, font=('맑은 고딕', 20))
         
-        print(data.loc[data['외부온도(인버터단위)']>=40].empty)
         if data.loc[data['외부온도(인버터단위)']>=40].empty:et['text'] = '외부온도 이상무'
         else:et['text'] = '외부 온도가 너무 높습니다. 주의해주시기 바랍니다.'
         if data.loc[data['모듈온도(인버터단위)']>=60].empty:mt['text'] = '모듈온도 이상무'
